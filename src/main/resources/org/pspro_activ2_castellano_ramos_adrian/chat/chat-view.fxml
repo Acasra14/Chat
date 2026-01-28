@@ -40,7 +40,7 @@
                 <Insets left="15.0" right="15.0" />
             </padding>
             <children>
-                <TextField fx:id="inputMensaje" onAction="#handleEnviar" prefHeight="40.0" promptText="Type a message..." style="-fx-background-color: #2c3239; -fx-text-fill: white; -fx-background-radius: 20; -fx-prompt-text-fill: #7f8c8d;" HBox.hgrow="ALWAYS">
+                <TextField fx:id="inputMensaje" onAction="#handleEnviar" prefHeight="40.0" promptText="Envia un mensaje..." style="-fx-background-color: #2c3239; -fx-text-fill: white; -fx-background-radius: 20; -fx-prompt-text-fill: #7f8c8d;" HBox.hgrow="ALWAYS">
                     <padding>
                         <Insets left="15.0" right="15.0" />
                     </padding>
