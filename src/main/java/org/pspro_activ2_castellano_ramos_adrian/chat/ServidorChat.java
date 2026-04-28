@@ -10,21 +10,21 @@ public class ServidorChat {
         int numMaxConexiones = 4;
 
         try (ServerSocket servidor = new ServerSocket(puerto)) {
-            System.out.println("Servidor iniciado en puerto " + puerto + "...");
+            System.out.println("[LOG SERVER] Servidor iniciado en puerto " + puerto + ". Esperando clientes...");
             InfoHilos info = new InfoHilos(numMaxConexiones);
 
             while (info.getConexiones() < numMaxConexiones) {
                 Socket socket = servidor.accept();
-                System.out.println("Nueva conexión aceptada.");
+                System.out.println("[LOG SERVER] Nueva conexión entrante aceptada.");
 
-                info.anadirATabla(socket, info.getConexiones());
-                info.setActuales(info.getActuales() + 1);
-                info.setConexiones(info.getConexiones() + 1);
+                int idPosicion = info.getConexiones();
+                info.anadirATabla(socket, idPosicion);
 
-                HiloServidorChat hilo = new HiloServidorChat(socket, info);
+                // Las variables se actualizarán dentro del Hilo si el Nick es válido
+                HiloServidorChat hilo = new HiloServidorChat(socket, info, idPosicion);
                 hilo.start();
             }
-            System.out.println("Límite de conexiones alcanzado.");
+            System.out.println("[LOG SERVER] Límite absoluto de conexiones del servidor alcanzado.");
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -20,67 +20,91 @@ public class ChatController {
 
     @FXML
     public void initialize() {
-        // Pedir nombre al usuario
+        pedirNombreYConectar();
+    }
+
+    private void pedirNombreYConectar() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Acceso al Chat");
-        dialog.setHeaderText(null);
+        dialog.setHeaderText("Identificación de usuario [cite: 28]");
         dialog.setContentText("Introduce tu nombre o nick:");
         nombre = dialog.showAndWait().orElse("Anonimo");
-        labelUsuario.setText("CONEXIÓN DEL CLIENTE CHAT: " + nombre);
 
         try {
             socket = new Socket("localhost", 44444);
             fsalida = new DataOutputStream(socket.getOutputStream());
             fentrada = new DataInputStream(socket.getInputStream());
 
-            // Hilo de escucha
+            fsalida.writeUTF(nombre);
+            if (fentrada.readUTF().equals("NICK_DUPLICADO")) { //
+                new Alert(Alert.AlertType.ERROR, "Nick duplicado").showAndWait();
+                System.exit(0);
+            }
+
+            labelUsuario.setText("CONEXIÓN DEL CLIENTE CHAT: " + nombre);
+            areaChat.appendText("🌟 Bienvenido. Escribe /ayuda para comandos.\n");
+
             new Thread(() -> {
                 try {
                     while (true) {
                         String msg = fentrada.readUTF();
+
+                        if (msg.equals("CLEAR_HISTORY")) {
+                            Platform.runLater(() -> {
+                                areaChat.clear();
+                                primerRecibo = true; // Reiniciar para el nuevo canal
+                            });
+                            continue;
+                        }
+
                         Platform.runLater(() -> {
-                            if (primerRecibo) {
-                                // Guardamos lo que ya había en el chat para ocultarlo
-                                mensajesAnteriores = msg;
-                                primerRecibo = false;
+                            if (msg.startsWith("PRV|")) {
+                                areaChat.appendText("\n" + msg.substring(4));
                             } else {
-                                // Mostramos solo los mensajes generados tras nuestra entrada
-                                String nuevos = msg.substring(mensajesAnteriores.length());
-                                areaChat.setText(nuevos);
+                                if (primerRecibo) {
+                                    mensajesAnteriores = msg;
+                                    primerRecibo = false;
+                                } else {
+                                    String nuevos = msg.substring(mensajesAnteriores.length());
+                                    areaChat.setText(areaChat.getText() + nuevos);
+                                    mensajesAnteriores = msg;
+                                }
                             }
                         });
                     }
-                } catch (IOException e) {
-                    Platform.runLater(() -> areaChat.appendText("\nConexión perdida con el servidor."));
-                }
+                } catch (IOException e) { }
             }).start();
 
-        } catch (IOException e) {
-            System.err.println("No se pudo conectar al servidor.");
-        }
+        } catch (IOException e) { System.exit(0); }
     }
 
     @FXML
     private void handleEnviar() {
         String texto = inputMensaje.getText().trim();
-        if (!texto.isEmpty()) {
-            try {
-                fsalida.writeUTF(nombre + "> " + texto);
-                inputMensaje.clear();
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (texto.isEmpty()) return;
+
+        try {
+            if (texto.equalsIgnoreCase("/ayuda")) {
+                areaChat.appendText("\n--- AYUDA ---" +
+                        "\n/join <canal> : Cambiar de sala" +
+                        "\n/p <nick> <msg> : Mensaje privado" +
+                        "\n/ayuda : Ver esto");
+            } else if (texto.startsWith("/join ") || texto.startsWith("/p ")) {
+                fsalida.writeUTF(texto);
+                if(texto.startsWith("/p ")) areaChat.appendText("\n[Privado enviado]");
+            } else {
+                fsalida.writeUTF(nombre + "> " + texto); // [cite: 31]
             }
-        }
+            inputMensaje.clear();
+        } catch (IOException e) { }
     }
 
     @FXML
     private void handleSalir() {
         try {
-            if (fsalida != null) fsalida.writeUTF("*****");
-            if (socket != null) socket.close();
+            fsalida.writeUTF("*****"); // [cite: 33]
+            socket.close();
             System.exit(0);
-        } catch (IOException e) {
-            System.exit(0);
-        }
+        } catch (IOException e) { System.exit(0); }
     }
 }
