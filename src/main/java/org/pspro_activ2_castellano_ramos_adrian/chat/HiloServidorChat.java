@@ -26,6 +26,7 @@ public class HiloServidorChat extends Thread {
         try {
             nick = fentrada.readUTF();
             if (infoh.existeNick(nick)) {
+                System.out.println("[LOG SERVER] Conexión rechazada: Nick '" + nick + "' ya está en uso.");
                 fsalida.writeUTF("NICK_DUPLICADO");
                 socket.close();
                 return;
@@ -33,11 +34,14 @@ public class HiloServidorChat extends Thread {
 
             fsalida.writeUTF("NICK_OK");
             infoh.registrarNick(idPosicion, nick);
-            infoh.setCanalUsuario(idPosicion, "General"); // Canal inicial [cite: 7]
+            infoh.setCanalUsuario(idPosicion, "General");
             infoh.setActuales(infoh.getActuales() + 1);
             infoh.setConexiones(infoh.getConexiones() + 1);
 
-            // Notificar entrada al canal General [cite: 35]
+            // LOG DE ENTRADA
+            System.out.println("[LOG SERVER] Cliente aceptado: " + nick + " (Conectados: " + infoh.getActuales() + ")");
+            System.out.println("[LOG SERVER] " + nick + " ha entrado por defecto al canal #General");
+
             String avisoEntrada = "> Entra en el Chat ... " + nick;
             infoh.addMensajeACanal("General", avisoEntrada);
             enviarMensajeAlCanal("General", infoh.getHistorialCanal("General"));
@@ -46,7 +50,9 @@ public class HiloServidorChat extends Thread {
                 String cadena = fentrada.readUTF();
                 String canalActual = infoh.getCanalUsuario(idPosicion);
 
-                if (cadena.trim().equals("*****")) { // Salida del usuario [cite: 33]
+                if (cadena.trim().equals("*****")) {
+                    // LOG DE SALIDA
+                    System.out.println("[LOG SERVER] Cliente desconectado: " + nick);
                     infoh.addMensajeACanal(canalActual, "> Abandona el Chat ... " + nick);
                     enviarMensajeAlCanal(canalActual, infoh.getHistorialCanal(canalActual));
                     infoh.liberarPosicion(idPosicion);
@@ -54,31 +60,30 @@ public class HiloServidorChat extends Thread {
                     break;
                 }
 
-                // COMANDO CAMBIO DE CANAL
                 if (cadena.startsWith("/join ")) {
                     String nuevoCanal = cadena.substring(6).trim();
-                    // Avisar salida del canal viejo
+
+                    // LOG DE CAMBIO DE CANAL
+                    System.out.println("[LOG SERVER] " + nick + " se ha cambiado del canal #" + canalActual + " al canal #" + nuevoCanal);
+
                     infoh.addMensajeACanal(canalActual, "> " + nick + " se ha ido a #" + nuevoCanal);
                     enviarMensajeAlCanal(canalActual, infoh.getHistorialCanal(canalActual));
 
-                    // Cambiar y avisar entrada al nuevo
                     infoh.setCanalUsuario(idPosicion, nuevoCanal);
-                    fsalida.writeUTF("CLEAR_HISTORY"); // Señal para el cliente
+                    fsalida.writeUTF("CLEAR_HISTORY");
                     infoh.addMensajeACanal(nuevoCanal, "> " + nick + " ha entrado en #" + nuevoCanal);
                     enviarMensajeAlCanal(nuevoCanal, infoh.getHistorialCanal(nuevoCanal));
                 }
-                // MENSAJES PRIVADOS
                 else if (cadena.startsWith("/p ")) {
                     procesarPrivado(cadena);
                 }
-                // MENSAJE NORMAL
                 else {
                     infoh.addMensajeACanal(canalActual, cadena);
                     enviarMensajeAlCanal(canalActual, infoh.getHistorialCanal(canalActual));
                 }
             }
         } catch (IOException e) {
-            System.out.println("[LOG] Desconexión de " + nick);
+            System.out.println("[LOG SERVER] Desconexión abrupta de " + nick);
         } finally {
             try { socket.close(); } catch (IOException e) { }
         }
@@ -99,6 +104,10 @@ public class HiloServidorChat extends Thread {
         String[] partes = cadena.split(" ", 3);
         if (partes.length == 3) {
             int posDest = infoh.getPosicionPorNick(partes[1]);
+
+            // LOG DE MENSAJE PRIVADO
+            System.out.println("[LOG SERVER] " + nick + " ha enviado un mensaje privado a " + partes[1]);
+
             if (posDest != -1) {
                 new DataOutputStream(infoh.getTabla()[posDest].getOutputStream())
                         .writeUTF("PRV|[Privado de " + nick + "]: " + partes[2]);

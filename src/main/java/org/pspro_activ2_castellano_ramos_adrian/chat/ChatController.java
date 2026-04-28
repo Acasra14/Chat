@@ -26,7 +26,7 @@ public class ChatController {
     private void pedirNombreYConectar() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Acceso al Chat");
-        dialog.setHeaderText("Identificación de usuario [cite: 28]");
+        dialog.setHeaderText("Identificación de usuario");
         dialog.setContentText("Introduce tu nombre o nick:");
         nombre = dialog.showAndWait().orElse("Anonimo");
 
