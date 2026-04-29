@@ -9,8 +9,8 @@ public class InfoHilos {
     private int maximo;
     private Socket[] tabla;
     private String[] nicks;
-    private String[] canalesActivos; // NUEVO: Canal en el que está cada usuario
-    private HashMap<String, String> historiales; // NUEVO: Historial por canal
+    private String[] canalesActivos; // Canal en el que está cada usuario
+    private HashMap<String, String> historiales; // Historial por canal
 
     public InfoHilos(int maximo) {
         this.maximo = maximo;
@@ -23,7 +23,6 @@ public class InfoHilos {
         this.historiales.put("General", ""); // Canal por defecto
     }
 
-    // --- GESTIÓN DE CANALES ---
     public synchronized String getHistorialCanal(String canal) {
         return historiales.getOrDefault(canal, "");
     }
@@ -44,7 +43,6 @@ public class InfoHilos {
         return canalesActivos[pos];
     }
 
-    // --- MÉTODOS EXISTENTES ACTUALIZADOS ---
     public synchronized int getConexiones() { return conexiones; }
     public synchronized void setConexiones(int c) { this.conexiones = c; }
     public synchronized int getActuales() { return actuales; }

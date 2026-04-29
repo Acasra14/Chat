@@ -93,7 +93,7 @@ public class ChatController {
                 fsalida.writeUTF(texto);
                 if(texto.startsWith("/p ")) areaChat.appendText("\n[Privado enviado]");
             } else {
-                fsalida.writeUTF(nombre + "> " + texto); // [cite: 31]
+                fsalida.writeUTF(nombre + "> " + texto);
             }
             inputMensaje.clear();
         } catch (IOException e) { }
@@ -102,7 +102,7 @@ public class ChatController {
     @FXML
     private void handleSalir() {
         try {
-            fsalida.writeUTF("*****"); // [cite: 33]
+            fsalida.writeUTF("*****");
             socket.close();
             System.exit(0);
         } catch (IOException e) { System.exit(0); }
